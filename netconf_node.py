@@ -60,52 +60,54 @@ class NETCONFTestNode():
       channel.send(self.get_hello_resp())
       channel.send(NC_TERMINATOR)
 
-      data = None
 
       while not self.CLOSED:
+         resp = None
+         hello_el2 = None
+         close_session_el = None
+         command_el = None
+         
+         try:
+            request = sock.read_message()
 
-         request = sock.read_message()
+            xmlroot = ET.ElementTree(ET.fromstring(request))
 
-         #xmlroot = ET.fromstring(request)
-         xmlroot = ET.ElementTree(ET.fromstring(request))
+            logging.debug("xmlroot:" + str(xmlroot))
 
-         logging.debug("xmlroot:" + str(xmlroot))
+            command_el = xmlroot.find(GET_CONFIG_TAG, self.namespaces)
+            if command_el is not None:
+               logging.debug("get-config is found")
+#               command = command_el.text
+#               logging.debug("command:" + str(command))
+#               if command == "showConfig":
+#                  logging.debug("showConfig recognised")
+               resp = self.get_show_data_resp()
+                  #channel.send(data)
+                  #channel.send(NC_TERMINATOR)
 
-         command_el = xmlroot.find(GET_CONFIG_TAG, self.namespaces)
-         if command_el is not None:
-            logging.debug("get-config is found")
-#            command = command_el.text
-#            logging.debug("command:" + str(command))
-#            if command == "showConfig":
-#               logging.debug("showConfig recognised")
-            data = self.get_show_data_resp()
-               #channel.send(data)
-               #channel.send(NC_TERMINATOR)
+            #close_session_el = xmlroot.find('close-session', self.namespaces)
+            close_session_el = xmlroot.find('base:'+CLOSE_SESSION_TAG, self.namespaces)
+            if close_session_el is not None:
+               logging.debug("close-session recognised")
+               resp = self.get_close_resp()
+               self.CLOSED = True
 
-         #close_session_el = xmlroot.find('close-session', self.namespaces)
-         close_session_el = xmlroot.find('base:'+CLOSE_SESSION_TAG, self.namespaces)
-         if close_session_el is not None:
-            logging.debug("close-session recognised")
-            data = self.get_close_resp()
-            self.CLOSED = True
+            hello_el2 = xmlroot.findall(HELLO_TAG, self.namespaces)
+            if hello_el2 is not None:
+               logging.debug("hello message received2")
 
-#         #hello_el = xmlroot.find(HELLO_TAG, self.namespaces)
-#         hello_el = xmlroot.find(HELLO_TAG)
-#         if hello_el is not None:
-#            logging.debug("hello message received")
-#         hello_el1 = xmlroot.find(HELLO_TAG, self.namespaces)
-#         if hello_el1 is not None:
-#            print("hello message received1")
-         hello_el2 = xmlroot.findall(HELLO_TAG, self.namespaces)
-         if hello_el2 is not None:
-            logging.debug("hello message received2")
+         except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            logging.info("Error handling message Database:" + str(e))
 
-         if data is None:
-            print("Unrecognised command:" + str(xmlroot))
-            data = self.get_error_resp()
+         if resp is None:
+            print("Unrecognised command:" + str(request))
+            resp = self.get_error_resp()
 
-         channel.send(data)
+         channel.send(resp)
          channel.send(NC_TERMINATOR)
+
 
       sock.close()
             
