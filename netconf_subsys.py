@@ -21,6 +21,11 @@ from paramiko.server import SubsystemHandler
 import logging
 
 
+NETCONF_PORT=830
+NC_TERMINATOR = "]]>]]>"
+
+
+
 class NETCONFsubsys(SubsystemHandler):
     cb_target = None
 

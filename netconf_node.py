@@ -1,82 +1,178 @@
 
 import xml.etree.ElementTree as ET
+from xml import etree
+
+from nc_socket import NCSocket
+from netconf_subsys import NC_TERMINATOR
+
+
+CLOSE_SESSION_TAG = "close-session"
+COMMAND_TAG = "command"
+HELLO_TAG = "hello"
+GET_CONFIG_TAG = "get-config"
+
+
+#NC_TERMINATOR = "]]>]]>"
+
+"""This is the close request from the client"""
+"""
+   C: <?xml version="1.0" encoding="UTF-8"?>
+   C: <rpc message-id="106"
+   C: xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+   C:   <close-session/>
+   C: </rpc>
+   C: ]]>]]>
+
+   S: <?xml version="1.0" encoding="UTF-8"?>
+   S: <rpc-reply id="106"
+   S: xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+   S:   <ok/>
+   S: </rpc-reply>
+   S: ]]>]]>
+"""
 
 
 class NETCONFTestNode():
 
-   hello_sent = False
+#   hello_sent = False
 
    def __init__(self):
       print("NETCONFTestNode init")
+      print("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="101"><get-config><source><running/></source><config xmlns="http://example.com/schema/1.2/config"><users/></config></get-config></rpc>]]>]]>""")
+      print("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="106" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><close-session/></rpc>]]>]]>""")
+      print("""<?xml version="1.0" encoding="UTF-8"?><hello><capabilities><capability>urn:ietf:params:xml:ns:netconf:base:1.0</capability></capabilities></hello>]]>]]>""")
+
+      self.namespaces = {'base': 'urn:ietf:params:xml:ns:netconf:base:1.0'}
+      self.CLOSED = False
 
 
+###################################################################################
+#
+# The session loop
+#
+###################################################################################
    def handle_session(self, channel):
       print("NETCONFTestNode handle_session")
 
-      if not self.hello_sent:
-         data = self.get_hello_resp()
+      sock = NCSocket(channel)
+
+      channel.send(self.get_hello_resp())
+      channel.send(NC_TERMINATOR)
+
+      data = None
+
+      while not self.CLOSED:
+
+         request = sock.read_message()
+
+         #xmlroot = ET.fromstring(request)
+         xmlroot = ET.ElementTree(ET.fromstring(request))
+
+         print("xmlroot:" + str(xmlroot))
+
+         command_el = xmlroot.find(GET_CONFIG_TAG, self.namespaces)
+         if command_el is not None:
+            print("get-config is found")
+#            command = command_el.text
+#            print("command:" + str(command))
+#            if command == "showConfig":
+#               print("showConfig recognised")
+            data = self.get_show_data_resp()
+               #channel.send(data)
+               #channel.send(NC_TERMINATOR)
+
+         #close_session_el = xmlroot.find('close-session', self.namespaces)
+         close_session_el = xmlroot.find('base:'+CLOSE_SESSION_TAG, self.namespaces)
+         if close_session_el is not None:
+            print("close-session recognised")
+            data = self.get_close_resp()
+            self.CLOSED = True
+
+#         #hello_el = xmlroot.find(HELLO_TAG, self.namespaces)
+#         hello_el = xmlroot.find(HELLO_TAG)
+#         if hello_el is not None:
+#            print("hello message received")
+#         hello_el1 = xmlroot.find(HELLO_TAG, self.namespaces)
+#         if hello_el1 is not None:
+#            print("hello message received1")
+         hello_el2 = xmlroot.findall(HELLO_TAG, self.namespaces)
+         if hello_el2 is not None:
+            print("hello message received2")
+
+         if data is None:
+            print("Unrecognised command:" + str(xmlroot))
+            data = self.get_error_resp()
+
          channel.send(data)
-         self.hello_sent = True
+         channel.send(NC_TERMINATOR)
 
-      while True:
-         if channel.recv_ready():
-            buf = channel.recv(100)
-            print("buf:" + str(buf))
-
-            xmlroot = ET.fromstring(buf)
-            #cmd = str(buf).strip()
-            #cmd = str(buf.strip())
-            print("xmlroot:" + str(xmlroot))
-
-            command = str(xmlroot.find('command').text)
-            print("command:" + str(command))
+      sock.close()
             
-            if command == "showConfig":
-               print("showConfig recognised")
-               data = self.get_show_data_resp()
-               channel.send(data)
-            else:
-               print("Unrecognised command:" + str(show-data))
-            
-
-      #data = "ALEX LIVERPOOL"
-
-#  <rpc><command>showConfig</command></rpc>
-
+#  <rpc message-id="101"><command>showConfig</command><params>None</params></rpc>]]>]]>
+###################################################################################
+#
+# The RPC Response
+#
+###################################################################################
    def get_show_data_resp(self):
       data = """<rpc-reply xmlns="URN" xmlns:nokia="URL">
           <ok/>
-        </rpc-reply>]]>]]>""" 
+        </rpc-reply>""" 
       return data
 
+###################################################################################
+#
+# The Hello Response
+#
+###################################################################################
+   def get_hello_resp(self):
+      return """
+         <hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+           <capabilities>
+              <capability>urn:ieft:params:netconf:base:1.0</capability>
+              <capability>urn:ieft:params:netconf:capability:candidate:1.0</capability>
+              <capability>urn:ieft:params:netconf:capability:validate:1.0</capability>
+              <capability>urn:ieft:params:netconf:capability:action:1.0</capability>
+              <capability>urn:ieft:params:netconf:capability:notification:1.0</capability>
+              <capability>urn:ieft:params:netconf:capability:interleave:1.0</capability>
+              <capability>urn:ericsson:com:netconf:notification:1.1</capability>
+              <capability>urn:ericsson:com:sgsnmme:heartbeat:1.0</capability>
+              <capability>http://www.ericsson.com/gsn/4.0/contentVersion</capability>
+              <capability>http://www.ericsson.com/gsn/3.0/protocolVersion</capability>
+           </capabilities>
+           <session-id>1</session-id>
+         </hello> 
+       """
 
+
+###################################################################################
+#
+# The Error Response
+#
+###################################################################################
+   def get_error_resp(self):
+      return """<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+         <rpc-error>
+            <error-type>rpc</error-type>
+            <error-tag>operation-failed</error-tag>
+            <error-severity>error</error-severity>
+         </rpc-error>
+      </rpc-reply>
+      """
+#<?xml version="1.0" encoding="UTF-8"?><rpc message-id="106" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><close-session/></rpc>]]>]]>
+###################################################################################
+#
+# The Close Response
+#
+###################################################################################
+   def get_close_resp(self):
+      return """<?xml version="1.0" encoding="UTF-8"?>
+         <rpc-reply id="106"
+            xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+            <ok/>
+         </rpc-reply>"""
 
 
  
-   def get_hello_resp(self):
-      data = """<?xml version="1.0" encoding="UTF-8"?>
-<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">    
-    <capabilities>
-        <capability>urn:ietf:params:netconf:base:1.0</capability>
-        <capability>urn:ietf:params:netconf:base:1.1</capability>
-        <capability>urn:ietf:params:netconf:capability:writable-running:1.0</capability>
-        <capability>urn:ietf:params:netconf:capability:validate:1.0</capability>
-        <capability>urn:ietf:params:netconf:capability:validate:1.1</capability>
-        <capability>urn:ietf:params:netconf:capability:startup:1.0</capability>
-        <capability>urn:ietf:params:netconf:capability:url:1.0?scheme=ftp,tftp,file</ capability>
-        <capability>urn:ietf:params:netconf:capability:with-defaults:1.0?basicmode=trim</capability>
-        <capability>urn:ietf:params:xml:ns:netconf:base:1.0?module=ietf-netconf&amp;revision=2015-02-27&amp;features=writable-running,validate,startup,url&amp;deviations=alu-netconf-deviations-r13</capability>
-        <capability>urn:xxx-network.com:sros:ns:yang:netconf-deviations-r13?module= xxx-network -deviations-r13&amp;revision=2015-02-27</capability>
-        <capability>urn:xxx-network.com:sros:ns:yang:cli-content-layer-r13?module= xxx-network -cli-content-layer-r13&amp;revision=2015-02-27</capability>
-        <capability>urn:xxx-network.com:sros:ns:yang:conf-r13?module=confr13&amp;revision=2015-02-27</capability>
-        <capability>urn:xxx-network.com:sros:ns:yang:conf-aaa-r13?module=conf-aaar13&amp;revision=2015-02-27</capability>
-        <capability>urn:xxx-network.com:sros:ns:yang:conf-vsm-r13?module=conf-vsmr13&amp;revision=2015-02-27</capability>
-    </capabilities>
-    <session-id>54</session-id>
-</hello>
-    ]]>]]>"""
-      return data
-    
-
 
 

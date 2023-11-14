@@ -9,6 +9,8 @@ import paramiko
 
 SESSION_TIME = 60
 
+g_port = 1830
+
 
 from netconf_subsys import NETCONFsubsys
 from netconf_node import NETCONFTestNode
@@ -24,7 +26,7 @@ host_key = paramiko.RSAKey(filename=sys.argv[1])
 
 
 
-class Server(paramiko.ServerInterface):
+class NetconfServer(paramiko.ServerInterface):
     channel = None
     def __init__(self):
         self.event = threading.Event()
@@ -73,7 +75,7 @@ def threaded(client):
     t.load_server_moduli()
     t.add_server_key(host_key)
 
-    server = Server()
+    server = NetconfServer()
     t.set_subsystem_handler('netconf', NETCONFsubsys, server.channel, "netconf", server)
 
     t.start_server(server=server)
@@ -88,11 +90,13 @@ def threaded(client):
 
 
 def listener():
+
+    port = g_port
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     #sock.bind(('127.0.0.1', 2222))
-    sock.bind(('', 2222))
-    print("Bound to 2222")
+    sock.bind(('', port))
+    print("Bound to " + str(port))
 
     sock.listen(100)
     client, addr = sock.accept()
