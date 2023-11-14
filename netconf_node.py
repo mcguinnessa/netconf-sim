@@ -1,4 +1,5 @@
 
+import logging
 import xml.etree.ElementTree as ET
 from xml import etree
 
@@ -37,10 +38,10 @@ class NETCONFTestNode():
 #   hello_sent = False
 
    def __init__(self):
-      print("NETCONFTestNode init")
-      print("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="101"><get-config><source><running/></source><config xmlns="http://example.com/schema/1.2/config"><users/></config></get-config></rpc>]]>]]>""")
-      print("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="106" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><close-session/></rpc>]]>]]>""")
-      print("""<?xml version="1.0" encoding="UTF-8"?><hello><capabilities><capability>urn:ietf:params:xml:ns:netconf:base:1.0</capability></capabilities></hello>]]>]]>""")
+      logging.debug("NETCONFTestNode init")
+      logging.debug("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="101"><get-config><source><running/></source><config xmlns="http://example.com/schema/1.2/config"><users/></config></get-config></rpc>]]>]]>""")
+      logging.debug("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="106" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><close-session/></rpc>]]>]]>""")
+      logging.debug("""<?xml version="1.0" encoding="UTF-8"?><hello><capabilities><capability>urn:ietf:params:xml:ns:netconf:base:1.0</capability></capabilities></hello>]]>]]>""")
 
       self.namespaces = {'base': 'urn:ietf:params:xml:ns:netconf:base:1.0'}
       self.CLOSED = False
@@ -52,7 +53,7 @@ class NETCONFTestNode():
 #
 ###################################################################################
    def handle_session(self, channel):
-      print("NETCONFTestNode handle_session")
+      logging.debug("NETCONFTestNode handle_session")
 
       sock = NCSocket(channel)
 
@@ -68,15 +69,15 @@ class NETCONFTestNode():
          #xmlroot = ET.fromstring(request)
          xmlroot = ET.ElementTree(ET.fromstring(request))
 
-         print("xmlroot:" + str(xmlroot))
+         logging.debug("xmlroot:" + str(xmlroot))
 
          command_el = xmlroot.find(GET_CONFIG_TAG, self.namespaces)
          if command_el is not None:
-            print("get-config is found")
+            logging.debug("get-config is found")
 #            command = command_el.text
-#            print("command:" + str(command))
+#            logging.debug("command:" + str(command))
 #            if command == "showConfig":
-#               print("showConfig recognised")
+#               logging.debug("showConfig recognised")
             data = self.get_show_data_resp()
                #channel.send(data)
                #channel.send(NC_TERMINATOR)
@@ -84,20 +85,20 @@ class NETCONFTestNode():
          #close_session_el = xmlroot.find('close-session', self.namespaces)
          close_session_el = xmlroot.find('base:'+CLOSE_SESSION_TAG, self.namespaces)
          if close_session_el is not None:
-            print("close-session recognised")
+            logging.debug("close-session recognised")
             data = self.get_close_resp()
             self.CLOSED = True
 
 #         #hello_el = xmlroot.find(HELLO_TAG, self.namespaces)
 #         hello_el = xmlroot.find(HELLO_TAG)
 #         if hello_el is not None:
-#            print("hello message received")
+#            logging.debug("hello message received")
 #         hello_el1 = xmlroot.find(HELLO_TAG, self.namespaces)
 #         if hello_el1 is not None:
 #            print("hello message received1")
          hello_el2 = xmlroot.findall(HELLO_TAG, self.namespaces)
          if hello_el2 is not None:
-            print("hello message received2")
+            logging.debug("hello message received2")
 
          if data is None:
             print("Unrecognised command:" + str(xmlroot))

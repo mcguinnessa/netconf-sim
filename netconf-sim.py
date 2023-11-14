@@ -1,45 +1,48 @@
 #!/usr/bin/env python
+
 import logging
 import socket
+import getopt
 import sys
 import threading
 from _thread import *
+
+from binascii import hexlify
+import base64
+from paramiko.util import b, u
 
 import paramiko
 
 SESSION_TIME = 60
 
-g_port = 1830
+DEFAULT_PORT = 1830
 
+#port = DEFAULT_PORT
 
 from netconf_subsys import NETCONFsubsys
 from netconf_node import NETCONFTestNode
 
-logging.basicConfig()
-logger = logging.getLogger()
-
-if len(sys.argv) != 2:
-    print("Need private host RSA key as argument.")
-    sys.exit(1)
-
-host_key = paramiko.RSAKey(filename=sys.argv[1])
+def usage():
+   print("Needs at least one argument for RSA private key")
+   sys.exit(1)
 
 
 
 class NetconfServer(paramiko.ServerInterface):
     channel = None
-    def __init__(self):
+    def __init__(self, user):
         self.event = threading.Event()
-        print("Init Server")
+        logging.debug("Init Server")
 
         self.node = NETCONFTestNode() 
         NETCONFsubsys.register_callback_object(self.node)
+        self.user = user
 
 
     def check_channel_request(self, kind, chanid):
-        print("check_channel_request")
-        print("    kind="+str(kind))
-        print("  chanid="+str(chanid))
+        logging.debug("check_channel_request")
+        logging.debug("    kind="+str(kind))
+        logging.debug("  chanid="+str(chanid))
         if kind == 'session':
             return paramiko.OPEN_SUCCEEDED
 
@@ -54,32 +57,50 @@ class NetconfServer(paramiko.ServerInterface):
 
 
     def check_auth_publickey(self, username, key):
-        print("check_auth_publickey")
-        return paramiko.AUTH_SUCCESSFUL
+        logging.debug("check_auth_publickey")
+        logging.debug("username:" + str(username))
+#        logging.debug("key:" + str(key))
+          
+#        return paramiko.AUTH_SUCCESSFUL
+#        print("Auth attempt with key: " + str(hexlify(key.get_fingerprint())))
+        logging.debug("Auth attempt with key: " + u(hexlify(key.get_fingerprint())))
+#        if (username == "robey") and (key == self.good_pub_key):
+        if (username == self.user) :
+            return paramiko.AUTH_SUCCESSFUL
+#        return paramiko.AUTH_FAILED
+
 
     def get_allowed_auths(self, username):
-        print("get_allowed_auths")
+        logging.debug("get_allowed_auths")
         return 'publickey'
 
     def check_channel_exec_request(self, channel, command):
-        print("check_channel_exec_request")
+        logging.debug("check_channel_exec_request")
         # This is the command we need to parse
-        print("Command:" + command)
-        print("Channel:" + channel)
+        logging.debug("Command:" + command)
+        logging.debug("Channel:" + channel)
         self.event.set()
         return True
 
-def threaded(client):
+def threaded(client, key_file, user):
+
+    logging.debug("Thread")
     t = paramiko.Transport(client)
     t.set_gss_host(socket.getfqdn(""))
     t.load_server_moduli()
+
+    logging.debug("Private Key file:" + str(key_file))
+
+    host_key = paramiko.RSAKey(filename=key_file)
+
+    logging.debug("Read key: " + u(hexlify(host_key.get_fingerprint())))
     t.add_server_key(host_key)
 
-    server = NetconfServer()
+    server = NetconfServer(user)
     t.set_subsystem_handler('netconf', NETCONFsubsys, server.channel, "netconf", server)
 
     t.start_server(server=server)
-    print("Connected:" + str(server))
+    logging.info("Connected:" + str(server))
 
     # Wait 30 seconds for a command
     server.event.wait(SESSION_TIME)
@@ -89,19 +110,19 @@ def threaded(client):
    
 
 
-def listener():
+def listener(port, private_key_file, user):
 
-    port = g_port
+    #port = g_port
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     #sock.bind(('127.0.0.1', 2222))
     sock.bind(('', port))
-    print("Bound to " + str(port))
+    logging.info("Bound to " + str(port))
 
     sock.listen(100)
     client, addr = sock.accept()
 
-    start_new_thread(threaded, (client,))
+    start_new_thread(threaded, (client, private_key_file, user))
 
 #    t = paramiko.Transport(client)
 #    t.set_gss_host(socket.getfqdn(""))
@@ -119,10 +140,73 @@ def listener():
 #    t.close()
 
 
-while True:
-    try:
-        listener()
-    except KeyboardInterrupt:
-        sys.exit(0)
-    except Exception as exc:
-        logger.error(exc)
+
+
+#########################################################################################
+#
+# Main
+#
+#########################################################################################
+def main(argv):
+
+   port = DEFAULT_PORT
+   user = ""
+
+   try:
+      opts, args = getopt.getopt(argv, "p:k:l:u:", ["log=", "port=", "rsa-key=", "user="])
+   except getopt.GetoptError:
+      usage()
+      sys.exit(2)
+
+   
+   loglevel = "DEBUG"
+   for opt, arg in opts:
+      if opt in ("-l", "--log"):
+         loglevel = arg.upper()
+      if opt in ("-u", "--log"):
+         user = str(arg)
+      if opt in ("-k", "--rsa-key"):
+         private_key_file = arg
+         logging.debug("Private Key file:" + str(private_key_file))
+      if opt in ("-p", "--port"):
+         port = int(arg)
+         logging.debug("Port " + str(port) + " provided")
+
+
+
+   numeric_log_level = getattr(logging, loglevel, None)
+
+   #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='./netconf-sim.log', filemode='w', level=logging.DEBUG)
+   #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='netconf-sim.log', filemode='w')
+   #logging.getLogger("imdbpy").setLevel(logging.ERROR)
+   formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
+
+   #formatter = logging.Formatter('%(message)s')
+   logging.getLogger('').setLevel(logging.DEBUG)
+   fh = logging.FileHandler('./netconf-sim.log')
+   fh.setLevel(logging.DEBUG)
+   fh.setFormatter(formatter)
+   logging.getLogger('').addHandler(fh)
+
+   ch = logging.StreamHandler()
+   ch.setLevel(logging.DEBUG)
+   ch.setFormatter(formatter)  
+   logging.getLogger('').addHandler(ch)
+
+   logging.info("NETCONF Simulator")
+
+   #host_key = paramiko.RSAKey(filename=sys.argv[1])
+
+
+   while True:
+       try:
+           listener(port, private_key_file, user)
+       except KeyboardInterrupt:
+           sys.exit(0)
+       except Exception as exc:
+           logging.error(exc)
+
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
+

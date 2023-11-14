@@ -31,44 +31,44 @@ class NETCONFsubsys(SubsystemHandler):
 
     @staticmethod
     def register_callback_object(cb_target):
-        print("Registering callback object")
+        logging.debug("Registering callback object")
         NETCONFsubsys.cb_target = cb_target
-        print('NETCONFsubsys: registered cb={cb_target}'.format(cb_target=str(cb_target)))
+        logging.debug('NETCONFsubsys: registered cb={cb_target}'.format(cb_target=str(cb_target)))
 
     def __init__(self, channel, name, server, *largs, **kwargs):
-        print("NETCONFsubsys: init channel={channel} name={name} server={server}".format(channel=str(channel), server=str(server), name=str(name)))
+        logging.debug("NETCONFsubsys: init channel={channel} name={name} server={server}".format(channel=str(channel), server=str(server), name=str(name)))
         SubsystemHandler.__init__(self, channel, name, server)
         transport = channel.get_transport()
         self.ultra_debug = transport.get_hexdump()
         self.next_handle = 1
-        print("NETCONFsubsys: init done")
+        logging.debug("NETCONFsubsys: init done")
 
     def start_subsystem(self, name, transport, channel):
-        print("NETCONFsubsys: start_subsystem name={name} transport={transport} channel={channel}".format(name=str(name), transport=str(transport), channel=str(channel)))
+        logging.debug("NETCONFsubsys: start_subsystem name={name} transport={transport} channel={channel}".format(name=str(name), transport=str(transport), channel=str(channel)))
         self.sock = channel
-        print("Started NETCONF server on channel {!r}".format(channel))
+        logging.debug("Started NETCONF server on channel {!r}".format(channel))
         try:
             self.handle_session()
         except Exception as e:
-           print("NETCONFsubsys: callback exception:" + str(e))
+           logging.debug("NETCONFsubsys: callback exception:" + str(e))
            import traceback
            traceback.print_exc()
-           print("Stopped NETCONF server on channel {!r}'.format(channel)")
+           logging.debug("Stopped NETCONF server on channel {!r}'.format(channel)")
 
     def finish_subsystem(self):
-        print('NETCONFsubsys: finish_subsystem')
+        logging.debug('NETCONFsubsys: finish_subsystem')
         threading.current_thread().daemon = True
         self.server.session_ended()
-        print("NETCONF subsys finished")
+        logging.debug("NETCONF subsys finished")
         super(NETCONFsubsys, self).finish_subsystem()
-        print("NETCONF subsys finished 2")
-        print("NETCONF subsys finished 3")
+        logging.debug("NETCONF subsys finished 2")
+        logging.debug("NETCONF subsys finished 3")
 
     def handle_session(self):
-       print("NETCONF subsys session started")
+       logging.debug("NETCONF subsys session started")
 
 #       data = "ALEX LIVERPOOL"
 #       self.sock.send(data) 
       
        NETCONFsubsys.cb_target.handle_session(self.sock)
-       print("NETCONF subsys session ended")
+       logging.debug("NETCONF subsys session ended")
