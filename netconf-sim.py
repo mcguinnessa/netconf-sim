@@ -163,7 +163,7 @@ def main(argv):
    for opt, arg in opts:
       if opt in ("-l", "--log"):
          loglevel = arg.upper()
-      if opt in ("-u", "--log"):
+      if opt in ("-u", "--user"):
          user = str(arg)
       if opt in ("-k", "--rsa-key"):
          private_key_file = arg

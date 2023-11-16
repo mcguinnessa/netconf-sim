@@ -43,7 +43,7 @@ class NETCONFTestNode():
       logging.debug("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="106" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><close-session/></rpc>]]>]]>""")
       logging.debug("""<?xml version="1.0" encoding="UTF-8"?><hello><capabilities><capability>urn:ietf:params:xml:ns:netconf:base:1.0</capability></capabilities></hello>]]>]]>""")
 
-      self.namespaces = {'base': 'urn:ietf:params:xml:ns:netconf:base:1.0'}
+      self.namespaces = {'' : '', 'base': 'urn:ietf:params:xml:ns:netconf:base:1.0', 'nc' : 'urn:ietf:params:xml:ns:netconf:base:1.0'}
       self.CLOSED = False
 
 
@@ -59,13 +59,15 @@ class NETCONFTestNode():
 
       channel.send(self.get_hello_resp())
       channel.send(NC_TERMINATOR)
+      logging.debug("Sent Hello message to client")
 
 
       while not self.CLOSED:
          resp = None
-         hello_el2 = None
+         #hello_el2 = None
          close_session_el = None
          command_el = None
+         mid = ""
          
          try:
             request = sock.read_message()
@@ -90,7 +92,11 @@ class NETCONFTestNode():
 
             if roottag == RPC_TAG:
                logging.debug("RPC Message")
-               command_el = xmlroot.find(GET_CONFIG_TAG, self.namespaces)
+
+               mid = xmlroot.attrib['message-id']
+               logging.debug("mid:" + str(mid))
+
+               command_el = xmlroot.find('nc:'+GET_CONFIG_TAG, self.namespaces)
                if command_el is not None:
                   logging.debug("get-config is found")
                   logging.debug("GET-CONFIG Message")
@@ -98,7 +104,7 @@ class NETCONFTestNode():
 #                  logging.debug("command:" + str(command))
 #                  if command == "showConfig":
 #                     logging.debug("showConfig recognised")
-                  resp = self.get_show_data_resp()
+                  resp = self.get_config_resp(mid)
                      #channel.send(data)
                      #channel.send(NC_TERMINATOR)
 
@@ -132,8 +138,9 @@ class NETCONFTestNode():
 
          if resp is None:
             print("Unrecognised command:" + str(request))
-            resp = self.get_error_resp()
+            resp = self.get_error_resp(mid)
 
+         logging.debug(resp)
          logging.debug("OUT:" + ET.canonicalize(resp))
          channel.send(resp)
          channel.send(NC_TERMINATOR)
@@ -147,11 +154,48 @@ class NETCONFTestNode():
 # The RPC Response
 #
 ###################################################################################
-   def get_show_data_resp(self):
-      data = """<rpc-reply xmlns="URN" xmlns:nokia="URL">
-          <ok/>
-        </rpc-reply>""" 
-      return data
+   def get_config_resp(self, mid):
+#      data = """<rpc-reply xmlns="URN" xmlns:nokia="URL" message-id="{}">
+#          <ok/>
+#        </rpc-reply>""".format(mid)
+#      return data
+
+
+
+      return """<rpc-reply xmlns="URN" xmlns:nokia="URL" message-id="{}">
+            <data>
+               <native xmlns="http://cisco.com/yang/namespace">
+                  <version>10.5</version>
+                  <boot-start-marker></boot-start-marker>
+                  <boot-end-marker></boot-end-marker>
+                  <service>
+                     <timestamps>
+                        <debug>
+                           <datetime>
+                              <msec></msec>
+                           </datetime>
+                        </debug>
+                        <log>
+                           <datetime>
+                              <msec></msec>
+                           </datetime>
+                        </log>
+                     </timestamps>
+                  </service>
+                  <platform>
+                     <console xmlns="http://nokia.com/yang/myyang">
+                           <output>serial</output>
+                     </console>
+                  </platform>
+                  <hostname>raspberrypi</hostname>
+                  <enable>
+                     <password>
+                        <secret>secretword</secret>
+                     </password>
+                  </enable>
+               </native>
+            </data>
+        </rpc-reply>""".format(mid)
 
 ###################################################################################
 #
@@ -183,15 +227,16 @@ class NETCONFTestNode():
 # The Error Response
 #
 ###################################################################################
-   def get_error_resp(self):
-      return """<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-         <rpc-error>
+   def get_error_resp(self, mid):
+      #return """<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="106">
+      return """<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="{}">
+         <error>
             <error-type>rpc</error-type>
             <error-tag>operation-failed</error-tag>
             <error-severity>error</error-severity>
-         </rpc-error>
+         </error>
       </rpc-reply>
-      """
+      """.format(mid)
 #<?xml version="1.0" encoding="UTF-8"?><rpc message-id="106" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><close-session/></rpc>]]>]]>
 ###################################################################################
 #
