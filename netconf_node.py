@@ -92,9 +92,15 @@ class NETCONFTestNode():
                resp = self.get_close_resp()
                self.CLOSED = True
 
+            #logging.debug("Message Root:" + ET.tostring(xmlroot, encoding='utf8'))
+            #logging.debug("Message Root:" + str(xmlroot.tag))
             hello_el2 = xmlroot.findall(HELLO_TAG, self.namespaces)
+            #hello_el2 = xmlroot.find(HELLO_TAG, self.namespaces)
+            #if hello_el2 is not None and len(hello_el2) > 0:
             if hello_el2 is not None:
                logging.debug("hello message received2")
+               logging.debug("->" + str(hello_el2))
+       
 
          except Exception as e:
             import traceback

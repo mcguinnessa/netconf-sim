@@ -39,6 +39,7 @@ class NCSocket():
       request = self.buffer.decode()
       print("RAW: request:" + str(request))
       request = request.split(']]>]]>', 1)[0]
+      request = request.strip()
 
 
 
