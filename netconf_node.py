@@ -10,6 +10,8 @@ from netconf_subsys import NC_TERMINATOR
 CLOSE_SESSION_TAG = "close-session"
 COMMAND_TAG = "command"
 HELLO_TAG = "hello"
+RPC_TAG = "rpc"
+
 GET_CONFIG_TAG = "get-config"
 
 
@@ -34,8 +36,6 @@ GET_CONFIG_TAG = "get-config"
 
 
 class NETCONFTestNode():
-
-#   hello_sent = False
 
    def __init__(self):
       logging.debug("NETCONFTestNode init")
@@ -69,37 +69,60 @@ class NETCONFTestNode():
          
          try:
             request = sock.read_message()
+            #logging.debug("Request Type:" + str(type(request)))
 
-            xmlroot = ET.ElementTree(ET.fromstring(request))
+            xmlroot = ET.fromstring(request)
+            #logging.debug("xmlroot Type:" + str(type(xmlroot)))
 
             logging.debug("xmlroot:" + str(xmlroot))
+            logging.debug("IN:" + ET.canonicalize(ET.tostring(xmlroot, encoding='utf8')))
 
-            command_el = xmlroot.find(GET_CONFIG_TAG, self.namespaces)
-            if command_el is not None:
-               logging.debug("get-config is found")
-#               command = command_el.text
-#               logging.debug("command:" + str(command))
-#               if command == "showConfig":
-#                  logging.debug("showConfig recognised")
-               resp = self.get_show_data_resp()
-                  #channel.send(data)
-                  #channel.send(NC_TERMINATOR)
+            roottag_list = xmlroot.tag.split('}')
+            roottag = roottag_list[-1]
 
-            #close_session_el = xmlroot.find('close-session', self.namespaces)
-            close_session_el = xmlroot.find('base:'+CLOSE_SESSION_TAG, self.namespaces)
-            if close_session_el is not None:
-               logging.debug("close-session recognised")
-               resp = self.get_close_resp()
-               self.CLOSED = True
+            #logging.debug("roottag_list:" + str(roottag_list))
+            #logging.debug("roottag_list len:" + str(len(roottag_list)))
+            
+            logging.debug("Root Tag:" + str(roottag))
+            #logging.debug(RPC_TAG + "=" + str(roottag))
+            #logging.debug("RPC_TAG Type:"+str(type(RPC_TAG)) + "=roottag:" + str(type(roottag)))
+            #logging.debug("RPC_TAG Len:"+str(len(RPC_TAG)) + "=roottag:" + str(len(roottag)))
 
-            #logging.debug("Message Root:" + ET.tostring(xmlroot, encoding='utf8'))
-            #logging.debug("Message Root:" + str(xmlroot.tag))
-            hello_el2 = xmlroot.findall(HELLO_TAG, self.namespaces)
-            #hello_el2 = xmlroot.find(HELLO_TAG, self.namespaces)
-            #if hello_el2 is not None and len(hello_el2) > 0:
-            if hello_el2 is not None:
-               logging.debug("hello message received2")
-               logging.debug("->" + str(hello_el2))
+            if roottag == RPC_TAG:
+               logging.debug("RPC Message")
+               command_el = xmlroot.find(GET_CONFIG_TAG, self.namespaces)
+               if command_el is not None:
+                  logging.debug("get-config is found")
+                  logging.debug("GET-CONFIG Message")
+#                  command = command_el.text
+#                  logging.debug("command:" + str(command))
+#                  if command == "showConfig":
+#                     logging.debug("showConfig recognised")
+                  resp = self.get_show_data_resp()
+                     #channel.send(data)
+                     #channel.send(NC_TERMINATOR)
+
+               #close_session_el = xmlroot.find('close-session', self.namespaces)
+               close_session_el = xmlroot.find('base:'+CLOSE_SESSION_TAG, self.namespaces)
+               if close_session_el is not None:
+                  logging.debug("CLOSE-SESSION Message")
+                  #logging.debug("close-session recognised")
+                  resp = self.get_close_resp()
+                  self.CLOSED = True
+
+            elif roottag == HELLO_TAG:
+               #logging.debug("Hello Message")
+               #logging.debug("Message Root:" + str(ET.tostring(xmlroot, encoding='utf8')))
+               #hello_el2 = xmlroot.findall(HELLO_TAG, self.namespaces)
+               #hello_el2 = xmlroot.find(HELLO_TAG, self.namespaces)
+               #if hello_el2 is not None and len(hello_el2) > 0:
+               #if hello_el2 is not None:
+               logging.debug("hello message - not responding")
+               #logging.debug("->" + str(hello_el2))
+               continue;
+
+            else:
+               logging.debug("Unrecognised tag:" + str(roottag))
        
 
          except Exception as e:
@@ -111,6 +134,7 @@ class NETCONFTestNode():
             print("Unrecognised command:" + str(request))
             resp = self.get_error_resp()
 
+         logging.debug("OUT:" + ET.canonicalize(resp))
          channel.send(resp)
          channel.send(NC_TERMINATOR)
 

@@ -44,7 +44,8 @@ class NCSocket():
 
 
       #request = request.replace(']]>]]>', '')
-      print("FINAL: request:" + str(request))
+      print("FINAL: request:" + request)
+      print("FINAL: request type:" + str(type(request)))
       return request
 
 ###################################################################################
