@@ -27,7 +27,6 @@ def usage():
    sys.exit(1)
 
 
-
 class NetconfServer(paramiko.ServerInterface):
     channel = None
     def __init__(self, user):
@@ -117,7 +116,7 @@ def listener(port, private_key_file, user):
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     #sock.bind(('127.0.0.1', 2222))
     sock.bind(('', port))
-    logging.info("Bound to " + str(port))
+    logging.info("Listening to " + str(port))
 
     sock.listen(100)
     client, addr = sock.accept()
@@ -159,37 +158,37 @@ def main(argv):
       sys.exit(2)
 
    
-   loglevel = "DEBUG"
+   loglevel = "INFO"
    for opt, arg in opts:
       if opt in ("-l", "--log"):
          loglevel = arg.upper()
+         print("loglevel:" + str(loglevel))
       if opt in ("-u", "--user"):
          user = str(arg)
+         print("user:" + str(user))
       if opt in ("-k", "--rsa-key"):
          private_key_file = arg
-         logging.debug("Private Key file:" + str(private_key_file))
+         print("Private Key file:" + str(private_key_file))
       if opt in ("-p", "--port"):
          port = int(arg)
-         logging.debug("Port " + str(port) + " provided")
-
+         print("Port " + str(port) + " provided")
 
 
    numeric_log_level = getattr(logging, loglevel, None)
 
    #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='./netconf-sim.log', filemode='w', level=logging.DEBUG)
    #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='netconf-sim.log', filemode='w')
-   #logging.getLogger("imdbpy").setLevel(logging.ERROR)
    formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
 
    #formatter = logging.Formatter('%(message)s')
-   logging.getLogger('').setLevel(logging.DEBUG)
-   fh = logging.FileHandler('./netconf-sim.log')
-   fh.setLevel(logging.DEBUG)
+   logging.getLogger('').setLevel(loglevel)
+   fh = logging.FileHandler('./netconf-sim.log', mode='w')
+   fh.setLevel(loglevel)
    fh.setFormatter(formatter)
    logging.getLogger('').addHandler(fh)
 
    ch = logging.StreamHandler()
-   ch.setLevel(logging.DEBUG)
+   ch.setLevel(loglevel)
    ch.setFormatter(formatter)  
    logging.getLogger('').addHandler(ch)
 

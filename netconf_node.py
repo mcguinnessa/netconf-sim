@@ -57,9 +57,11 @@ class NETCONFTestNode():
 
       sock = NCSocket(channel)
 
-      channel.send(self.get_hello_resp())
+      hello_resp = self.get_hello_resp()
+      logging.info("OUT:" + ET.canonicalize(hello_resp))
+      channel.send(hello_resp)
       channel.send(NC_TERMINATOR)
-      logging.debug("Sent Hello message to client")
+      logging.info("Sent Hello message to client")
 
 
       while not self.CLOSED:
@@ -77,7 +79,7 @@ class NETCONFTestNode():
             #logging.debug("xmlroot Type:" + str(type(xmlroot)))
 
             logging.debug("xmlroot:" + str(xmlroot))
-            logging.debug("IN:" + ET.canonicalize(ET.tostring(xmlroot, encoding='utf8')))
+            logging.info("IN:" + ET.canonicalize(ET.tostring(xmlroot, encoding='utf8')))
 
             roottag_list = xmlroot.tag.split('}')
             roottag = roottag_list[-1]
@@ -113,7 +115,7 @@ class NETCONFTestNode():
                if close_session_el is not None:
                   logging.debug("CLOSE-SESSION Message")
                   #logging.debug("close-session recognised")
-                  resp = self.get_close_resp()
+                  resp = self.get_close_resp(mid)
                   self.CLOSED = True
 
             elif roottag == HELLO_TAG:
@@ -128,20 +130,20 @@ class NETCONFTestNode():
                continue;
 
             else:
-               logging.debug("Unrecognised tag:" + str(roottag))
+               logging.info("Unrecognised tag:" + str(roottag))
        
 
          except Exception as e:
             import traceback
             print(traceback.format_exc())
-            logging.info("Error handling message Database:" + str(e))
+            logging.info("Error handling message:" + str(e))
 
          if resp is None:
-            print("Unrecognised command:" + str(request))
+            logging.debug("Unrecognised command:" + str(request))
             resp = self.get_error_resp(mid)
 
-         logging.debug(resp)
-         logging.debug("OUT:" + ET.canonicalize(resp))
+         #logging.debug(resp)
+         logging.info("OUT:" + ET.canonicalize(resp))
          channel.send(resp)
          channel.send(NC_TERMINATOR)
 
@@ -155,14 +157,33 @@ class NETCONFTestNode():
 #
 ###################################################################################
    def get_config_resp(self, mid):
+      return """<?xml version="1.0" encoding="UTF-8"?>
+         <rpc-reply message-id="{}" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+             <data>
+                 <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf" xmlns:nokia-attr="urn:nokia.com:sros:ns:yang:sr:attributes">
+                     <system>
+                         <name nokia-attr:comment="This is a comment on the system name."> node2</name>
+                     </system>
+                 </configure>
+             </data>
+         </rpc-reply>
+      """.format(mid)
+###################################################################################
+#
+# The RPC Response
+#
+###################################################################################
+   def get_config_resp_example(self, mid):
 #      data = """<rpc-reply xmlns="URN" xmlns:nokia="URL" message-id="{}">
 #          <ok/>
 #        </rpc-reply>""".format(mid)
 #      return data
 
 
+#	<?xml version="1.0" encoding="UTF-8"?>
 
-      return """<rpc-reply xmlns="URN" xmlns:nokia="URL" message-id="{}">
+      return """
+         <rpc-reply message-id="{}">
             <data>
                <native xmlns="http://cisco.com/yang/namespace">
                   <version>10.5</version>
@@ -243,12 +264,12 @@ class NETCONFTestNode():
 # The Close Response
 #
 ###################################################################################
-   def get_close_resp(self):
+   def get_close_resp(self, mid):
       return """<?xml version="1.0" encoding="UTF-8"?>
-         <rpc-reply id="106"
+         <rpc-reply message-id="{}"
             xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
             <ok/>
-         </rpc-reply>"""
+         </rpc-reply>""".format(mid)
 
 
  

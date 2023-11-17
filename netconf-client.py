@@ -5,6 +5,8 @@ from ncclient import manager
 
 import sys
 import getopt
+import logging
+import time
 
 
 
@@ -22,7 +24,7 @@ import getopt
 def main(argv):
 
    try:
-      opts, args = getopt.getopt(argv, "h:p:u:", ["port=", "host=", "user="])
+      opts, args = getopt.getopt(argv, "h:p:u:l:t:", ["port=", "host=", "user=", "log=", "timeout="])
    except getopt.GetoptError:
       usage()
       sys.exit(2)
@@ -30,8 +32,14 @@ def main(argv):
    host = None
    port = None
    user = None
+   timeout = 30
+
+   loglevel = "INFO"
 
    for opt, arg in opts:
+      if opt in ("-l", "--log"):
+         loglevel = arg.upper()
+         print("Log:" + str(loglevel))
       if opt in ("-h", "--host"):
          host = str(arg)
          print("Host:" + host)
@@ -41,27 +49,64 @@ def main(argv):
       if opt in ("-p", "--port"):
          port = int(arg)
          print("Port " + str(port) + " provided")
+      if opt in ("-t", "--timeout"):
+         timeout = int(arg)
+         print("Timeout " + str(timeout) )
 
    if host is None or port is None or user is None:
       print("Needs arguments for port, host and user")
+      usage()
       sys.exit(1) 
 
 
-   eos=manager.connect(host=host, port=port, timeout=30, username=user, password="", hostkey_verify=False)
-   print("Connected: " + str(eos.connected))
+   numeric_log_level = getattr(logging, loglevel, None)
+
+   #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='./netconf-sim.log', filemode='w', level=logging.DEBUG)
+   #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='netconf-sim.log', filemode='w')
+   logging.getLogger("ncclient").setLevel(logging.INFO)
+   formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
+
+   #formatter = logging.Formatter('%(message)s')
+   #logging.getLogger('').setLevel(logging.DEBUG)
+   logging.getLogger('').setLevel(loglevel)
+   fh = logging.FileHandler('./netconf-client.log', mode='w')
+   fh.setLevel(loglevel)
+   fh.setFormatter(formatter)
+   logging.getLogger('').addHandler(fh)
+
+   ch = logging.StreamHandler()
+   ch.setLevel(loglevel)
+   ch.setFormatter(formatter)
+   logging.getLogger('').addHandler(ch)
+
+   logging.info("NETCONF Client")
+
+
+   eos=manager.connect(host=host, port=port, timeout=timeout, username=user, password="", hostkey_verify=False)
+   logging.info("Connected: " + str(eos.connected))
 
    for cap in eos.server_capabilities:
-      print("Capability:" + str(cap))
+      logging.info("Capability:" + str(cap))
 
 
 
-   print("Sending get-config")
+   logging.debug("Sending get-config")
    resp = eos.get_config(source="running")
-   print("resp:" + str(resp))
+   logging.info("resp:" + str(resp))
+
+   delay = 2
+   logging.info("Sleeping for "+str(delay)+"s")
+   time.sleep(delay)
+
+   logging.debug("Sending close-session")
+   resp = eos.close_session()
 
    #eos.connected
    #eos.timeout 30
    #eos.session_id  '1292406600'
+
+def usage():
+   print("netconf-client -p <port> -h <host> -u <user> -t <timeout> -l <loglevel>")
 
 
 if __name__ == "__main__":
