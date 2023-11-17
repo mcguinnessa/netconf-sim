@@ -63,7 +63,7 @@ def main(argv):
 
    #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='./netconf-sim.log', filemode='w', level=logging.DEBUG)
    #logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', filename='netconf-sim.log', filemode='w')
-   logging.getLogger("ncclient").setLevel(logging.INFO)
+   logging.getLogger("ncclient").setLevel(loglevel)
    formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
 
    #formatter = logging.Formatter('%(message)s')
