@@ -82,7 +82,7 @@ def main(argv):
    logging.info("NETCONF Client")
 
 
-   eos=manager.connect(host=host, port=port, timeout=timeout, username=user, password="", hostkey_verify=False)
+   eos=manager.connect(host=host, port=port, timeout=timeout, username=user, password="", hostkey_verify=False, key_filename='/home/alex/.ssh/id_rsa')
    logging.info("Connected: " + str(eos.connected))
 
    for cap in eos.server_capabilities:
