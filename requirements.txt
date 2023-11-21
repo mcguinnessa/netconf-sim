@@ -1,6 +1,2 @@
 paramiko==3.3.1
 ncclient==0.6.15
-#pycparser==2.21
-#pyspnego==0.9.1
-#smbprotocol==1.10.1
-#pymongo==4.4.1
