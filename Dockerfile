@@ -1,6 +1,7 @@
 # ==== CONFIGURE =====
 # Use a Node 16 base image
-FROM python:3.12.0b3-bookworm
+#FROM python:3.12.0b3-bookworm
+FROM python:3.13.0a1-bookworm
 
 # Set the working directory to /app inside the container
 WORKDIR /app
@@ -11,7 +12,7 @@ ENV USER ""
 ENV RSA_PRIVATE_KEY ""
 
 COPY requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
