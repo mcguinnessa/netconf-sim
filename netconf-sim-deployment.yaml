@@ -21,7 +21,7 @@ spec:
         - name: PORT 
           value: "1830"
         - name: RSA_PRIVATE_KEY 
-          value: "nc_sim.priv"
+          value: "/app/nc-sim.priv"
         - name: USER 
           value: "alex"
         - name: LOGLEVEL 
@@ -30,4 +30,14 @@ spec:
 # e.g.  image: localhost:32000/hello-app:v3
         ports:
         - containerPort: 1830
+#        volumeMounts:
+#        - name: "netconf-dir"
+#          mountPath: "/shared"
+#        command: [ "sh", "-c"]
+#        args: ["while true; do echo 'yo' && sleep 5; done;"]
+#      volumes:
+#      - name: "netconf-dir"
+#        persistentVolumeClaim:
+#          claimName: "netconf-pvc"
+
 
