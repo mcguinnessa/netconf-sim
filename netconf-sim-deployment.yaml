@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netconf-sim-deployment
+  labels:
+    app: netconf-sim
+spec:
+  selector:
+    matchLabels:
+      app: netconf-sim
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: netconf-sim
+    spec:
+      containers:
+      - name: netconf-sim
+        image: mcguinnessa/netconf-sim:latest
+        env:
+        - name: PORT 
+          value: "1830"
+        - name: RSA_PRIVATE_KEY 
+          value: "nc_sim.priv"
+        - name: USER 
+          value: "alex"
+        - name: LOGLEVEL 
+          value: "debug"
+# Use the localhost:32000 path to use image from registry service
+# e.g.  image: localhost:32000/hello-app:v3
+        ports:
+        - containerPort: 1830
+
