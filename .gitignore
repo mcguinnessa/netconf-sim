@@ -162,3 +162,5 @@ cython_debug/
 
 
 paramiko_rsa*
+*.priv
+*.pub

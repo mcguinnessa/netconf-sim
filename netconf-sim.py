@@ -4,6 +4,7 @@ import logging
 import socket
 import getopt
 import sys
+import os
 import threading
 from _thread import *
 
@@ -88,7 +89,7 @@ def threaded(client, key_file, user, timeout):
     t.set_gss_host(socket.getfqdn(""))
     t.load_server_moduli()
 
-    logging.debug("Private Key file:" + str(key_file))
+    
 
     host_key = paramiko.RSAKey(filename=key_file)
 
@@ -202,6 +203,14 @@ def main(argv):
    logging.info("RSA_PRIVATE_KEY=" + str(private_key_file))
    logging.info("TIMEOUT=" + str(timeout))
    logging.info("LOGLEVEL=" + str(loglevel))
+
+   logging.debug("Private Key file:" + str(private_key_file))
+   if not os.path.isfile(private_key_file):
+      logging.info(str(private_key_file) + " is not a valid file")
+      print(str(private_key_file) + " is not a valid file")
+      sys.exit(2)
+   else:
+      logging.info(str(private_key_file) + " is a file")
 
    #host_key = paramiko.RSAKey(filename=sys.argv[1])
 
