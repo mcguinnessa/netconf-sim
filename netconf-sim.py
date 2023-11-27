@@ -13,7 +13,7 @@ from paramiko.util import b, u
 
 import paramiko
 
-SESSION_TIME = 60
+DEFAULT_SESSION_TIME = 60
 
 DEFAULT_PORT = 1830
 
@@ -81,7 +81,7 @@ class NetconfServer(paramiko.ServerInterface):
         self.event.set()
         return True
 
-def threaded(client, key_file, user):
+def threaded(client, key_file, user, timeout):
 
     logging.debug("Thread")
     t = paramiko.Transport(client)
@@ -102,26 +102,26 @@ def threaded(client, key_file, user):
     logging.info("Connected:" + str(server))
 
     # Wait 30 seconds for a command
-    server.event.wait(SESSION_TIME)
+    server.event.wait(timeout)
     t.close()
 
 
    
 
 
-def listener(port, private_key_file, user):
+def listener(port, private_key_file, user, timeout):
 
     #port = g_port
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     #sock.bind(('127.0.0.1', 2222))
     sock.bind(('', port))
-    logging.info("Listening to " + str(port))
+    logging.info("Listening to " + str(port) + " for " + str(timeout) + "s")
 
     sock.listen(100)
     client, addr = sock.accept()
 
-    start_new_thread(threaded, (client, private_key_file, user))
+    start_new_thread(threaded, (client, private_key_file, user, timeout))
 
 #    t = paramiko.Transport(client)
 #    t.set_gss_host(socket.getfqdn(""))
@@ -150,9 +150,10 @@ def main(argv):
 
    port = DEFAULT_PORT
    user = ""
+   timeout = DEFAULT_SESSION_TIME
 
    try:
-      opts, args = getopt.getopt(argv, "p:k:l:u:", ["log=", "port=", "rsa-key=", "user="])
+      opts, args = getopt.getopt(argv, "t:p:k:l:u:", ["timeout=", "log=", "port=", "rsa-key=", "user="])
    except getopt.GetoptError:
       usage()
       sys.exit(2)
@@ -172,6 +173,9 @@ def main(argv):
       if opt in ("-p", "--port"):
          port = int(arg)
          print("Port " + str(port) + " provided")
+      if opt in ("-t", "--timeout"):
+         timeout = int(arg)
+         print("Timeout " + str(timeout) + " provided")
 
 
    numeric_log_level = getattr(logging, loglevel, None)
@@ -193,13 +197,18 @@ def main(argv):
    logging.getLogger('').addHandler(ch)
 
    logging.info("NETCONF Simulator")
+   logging.info("PORT=" + str(port))
+   logging.info("USER=" + str(user))
+   logging.info("RSA_PRIVATE_KEY=" + str(private_key_file))
+   logging.info("TIMEOUT=" + str(timeout))
+   logging.info("LOGLEVEL=" + str(loglevel))
 
    #host_key = paramiko.RSAKey(filename=sys.argv[1])
 
 
    while True:
        try:
-           listener(port, private_key_file, user)
+           listener(port, private_key_file, user, timeout)
        except KeyboardInterrupt:
            sys.exit(0)
        except Exception as exc:
