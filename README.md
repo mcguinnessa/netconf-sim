@@ -22,6 +22,8 @@ To Run:
 
 Docker
 ======
+
+Before building the Docker image, ensure you have created the ssh file
 To build docker image:
 
 sudo docker build -t <username>/netconf-sim .

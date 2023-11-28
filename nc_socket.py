@@ -33,9 +33,9 @@ class NCSocket():
                """Not read anything"""
 
             self.buffer += data
-            logging.debug("buffer:" + str(self.buffer))
+#            logging.debug("buffer:" + str(self.buffer))
 
-      logging.debug("FINAL: buffer:" + str(self.buffer))
+#      logging.debug("FINAL: buffer:" + str(self.buffer))
 
       request = self.buffer.decode()
       logging.debug("RAW: request:" + str(request))
@@ -45,8 +45,7 @@ class NCSocket():
 
 
       #request = request.replace(']]>]]>', '')
-      logging.debug("FINAL: request:" + request)
-#      print("FINAL: request type:" + str(type(request)))
+#      logging.debug("FINAL: request:" + request)
       return request
 
 ###################################################################################

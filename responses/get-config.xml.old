@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rpc-reply message-id="{}">
+   <data>
+      <native xmlns="http://cisco.com/yang/namespace">
+         <version>10.5</version>
+         <boot-start-marker></boot-start-marker>
+         <boot-end-marker></boot-end-marker>
+         <service>
+            <timestamps>
+               <debug>
+                  <datetime>
+                     <msec></msec>
+                  </datetime>
+               </debug>
+               <log>
+                  <datetime>
+                     <msec></msec>
+                  </datetime>
+               </log>
+            </timestamps>
+         </service>
+         <platform>
+            <console xmlns="http://nokia.com/yang/myyang">
+               <output>serial</output>
+            </console>
+         </platform>
+         <hostname>raspberrypi</hostname>
+         <enable>
+            <password>
+               <secret>secretword</secret>
+            </password>
+         </enable>
+      </native>
+   </data>
+</rpc-reply>
+

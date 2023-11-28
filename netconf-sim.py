@@ -6,6 +6,7 @@ import getopt
 import sys
 import os
 import threading
+
 from _thread import *
 
 from binascii import hexlify
@@ -22,21 +23,24 @@ DEFAULT_PORT = 1830
 
 from netconf_subsys import NETCONFsubsys
 from netconf_node import NETCONFTestNode
+from responses import Responses
 
 def usage():
-   print("Needs at least one argument for RSA private key")
+   print("Invalid Arguments provided")
    sys.exit(1)
 
 
 class NetconfServer(paramiko.ServerInterface):
     channel = None
-    def __init__(self, user):
+
+    def __init__(self, user, caching):
         self.event = threading.Event()
         logging.debug("Init Server")
 
-        self.node = NETCONFTestNode() 
+        self.node = NETCONFTestNode(caching) 
         NETCONFsubsys.register_callback_object(self.node)
         self.user = user
+
 
 
     def check_channel_request(self, kind, chanid):
@@ -82,7 +86,7 @@ class NetconfServer(paramiko.ServerInterface):
         self.event.set()
         return True
 
-def threaded(client, key_file, user, timeout):
+def threaded(client, key_file, user, timeout, response_caching):
 
     logging.debug("Thread")
     t = paramiko.Transport(client)
@@ -96,7 +100,7 @@ def threaded(client, key_file, user, timeout):
     logging.debug("Read key: " + u(hexlify(host_key.get_fingerprint())))
     t.add_server_key(host_key)
 
-    server = NetconfServer(user)
+    server = NetconfServer(user, response_caching)
     t.set_subsystem_handler('netconf', NETCONFsubsys, server.channel, "netconf", server)
 
     t.start_server(server=server)
@@ -110,7 +114,7 @@ def threaded(client, key_file, user, timeout):
    
 
 
-def listener(port, private_key_file, user, timeout):
+def listener(port, private_key_file, user, timeout, response_caching):
 
     #port = g_port
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,7 +126,7 @@ def listener(port, private_key_file, user, timeout):
     sock.listen(100)
     client, addr = sock.accept()
 
-    start_new_thread(threaded, (client, private_key_file, user, timeout))
+    start_new_thread(threaded, (client, private_key_file, user, timeout, response_caching))
 
 #    t = paramiko.Transport(client)
 #    t.set_gss_host(socket.getfqdn(""))
@@ -154,13 +158,14 @@ def main(argv):
    timeout = DEFAULT_SESSION_TIME
 
    try:
-      opts, args = getopt.getopt(argv, "t:p:k:l:u:", ["timeout=", "log=", "port=", "rsa-key=", "user="])
+      opts, args = getopt.getopt(argv, "t:p:k:l:u:", ["timeout=", "log=", "port=", "rsa-key=", "user=", "nocache"])
    except getopt.GetoptError:
       usage()
       sys.exit(2)
 
    
    loglevel = "INFO"
+   no_cache = False
    for opt, arg in opts:
       if opt in ("-l", "--log"):
          loglevel = arg.upper()
@@ -177,6 +182,9 @@ def main(argv):
       if opt in ("-t", "--timeout"):
          timeout = int(arg)
          print("Timeout " + str(timeout) + " provided")
+      if opt in ("--nocache"):
+         no_cache = True
+         print("Responses not cached")
 
 
    numeric_log_level = getattr(logging, loglevel, None)
@@ -214,10 +222,12 @@ def main(argv):
 
    #host_key = paramiko.RSAKey(filename=sys.argv[1])
 
+#   RESPONSE_DIR = "./responses"
+#   responses = Responses(RESPONSE_DIR)
 
    while True:
        try:
-           listener(port, private_key_file, user, timeout)
+           listener(port, private_key_file, user, timeout, no_cache)
        except KeyboardInterrupt:
            sys.exit(0)
        except Exception as exc:
