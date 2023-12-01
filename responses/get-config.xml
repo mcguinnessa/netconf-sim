@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rpc-reply message-id="{}" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
    <data>
-      <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf" xmlns:nokia-attr="urn:nokia.com:sros:ns:yang:sr:attributes">
-      <system>
-         <name nokia-attr:comment="This is a comment on the system name."> node2</name>
-      </system>
+      <configure xmlns="urn:nokia.com:cn:ns:yang:cmm:conf" xmlns:nokiaattr="urn:nokia.com:cn:ns:yang:cmm:attributes">
+         <amf>
+            <profile>
+               <dnn-override>
+                  <name>default</name>
+                  <default-override-dnn></default-override-dnn>
+                  <dnn-override>false</dnn-override>
+                  <send-override-dnn-to-ue>false</send-override-dnn-to-ue>
+                  <dnn-override-with-wildcard-dnn>false</dnn-override-with-wildcard-dnn>
+               </dnn-override>
+            </profile>
+         </amf>
       </configure>
    </data>
 </rpc-reply>
-
-

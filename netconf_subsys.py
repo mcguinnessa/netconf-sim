@@ -21,8 +21,9 @@ from paramiko.server import SubsystemHandler
 import logging
 
 
-NETCONF_PORT=830
-NC_TERMINATOR = "]]>]]>"
+#NETCONF_PORT=830
+#NC_TERMINATOR_1_0 = "]]>]]>"
+#NC_TERMINATOR_1_1 = "\n##\n"
 
 
 
@@ -67,8 +68,5 @@ class NETCONFsubsys(SubsystemHandler):
     def handle_session(self):
        logging.debug("NETCONF subsys session started")
 
-#       data = "ALEX LIVERPOOL"
-#       self.sock.send(data) 
-      
        NETCONFsubsys.cb_target.handle_session(self.sock)
        logging.debug("NETCONF subsys session ended")

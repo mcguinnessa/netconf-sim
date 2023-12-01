@@ -3,8 +3,9 @@ import logging
 import xml.etree.ElementTree as ET
 from xml import etree
 
-from nc_socket import NCSocket
-from netconf_subsys import NC_TERMINATOR
+#from nc_socket import NCSocket
+from nc_session import NCSession
+from netconf_spec import *
 from responses import Responses
 
 
@@ -44,11 +45,9 @@ class NETCONFTestNode():
 
       self.namespaces = {'' : '', 'base': 'urn:ietf:params:xml:ns:netconf:base:1.0', 'nc' : 'urn:ietf:params:xml:ns:netconf:base:1.0'}
       self.CLOSED = False
+      #self.terminator = NC_TERMINATOR_1_0
 
       self.responses = Responses("./responses", response_caching)
-
-
-
 
 
 ###################################################################################
@@ -59,16 +58,17 @@ class NETCONFTestNode():
    def handle_session(self, channel):
       logging.debug("NETCONFTestNode handle_session")
 
-      sock = NCSocket(channel)
+      session = NCSession(channel)
 
       hello_resp = self.responses.get_response_for(HELLO_TAG)
       logging.info("OUT:" + ET.canonicalize(hello_resp))
-      channel.send(hello_resp)
-      channel.send(NC_TERMINATOR)
+      session.write_message(hello_resp)
+#      channel.send(hello_resp)
+#      channel.send(NC_TERMINATOR_1_0)
       logging.info("Sent Hello message to client")
 
-
       while not self.CLOSED:
+         logging.debug("Waiting for data.")
          resp = None
          #hello_el2 = None
          close_session_el = None
@@ -76,7 +76,7 @@ class NETCONFTestNode():
          mid = ""
          
          try:
-            request = sock.read_message()
+            request = session.read_message()
             #logging.debug("Request Type:" + str(type(request)))
 
             xmlroot = ET.fromstring(request)
@@ -125,8 +125,15 @@ class NETCONFTestNode():
 
          #logging.debug(resp)
          logging.info("OUT:" + ET.canonicalize(resp))
-         channel.send(resp)
-         channel.send(NC_TERMINATOR)
+         #channel.send(resp)
+
+         #if version == NC_BASE_1_1:
+         #   #channel.send(NC_TERMINATOR_1_1)
+         #   session.write_message_1_1(resp)
+         #else:
+         #   #channel.send(NC_TERMINATOR_1_0)
+         #   session.write_message_1_0(resp)
+         session.write_message(resp)
 
 
       sock.close()

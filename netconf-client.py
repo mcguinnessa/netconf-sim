@@ -94,9 +94,27 @@ def main(argv):
    resp = eos.get_config(source="running")
    logging.info("resp:" + str(resp))
 
-   delay = 2
+   delay = 1
    logging.info("Sleeping for "+str(delay)+"s")
    time.sleep(delay)
+
+
+   conf = """
+      <config>
+         <system xmlns="http://openconfig.net/yang/system">
+            <config>
+               <domain-name>abc.xyz</domain-name>
+            </config>
+         </system>
+      </config>"""
+
+   logging.debug("Sending edit-config")
+   eos.edit_config(target = "running", config = conf, default_operation="merge")
+
+   logging.info("Sleeping for "+str(delay)+"s")
+   time.sleep(delay)
+
+#<rpc-reply xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="urn:uuid:33ca18d3-43b5-4277-a6ce-9a751f74cada"><ok></ok></rpc-reply>
 
    logging.debug("Sending close-session")
    resp = eos.close_session()

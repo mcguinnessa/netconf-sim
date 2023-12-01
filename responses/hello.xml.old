@@ -1,0 +1,15 @@
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+   <capabilities>
+      <capability>urn:ieft:params:netconf:base:1.0</capability>
+      <capability>urn:ieft:params:netconf:capability:candidate:1.0</capability>
+      <capability>urn:ieft:params:netconf:capability:validate:1.0</capability>
+      <capability>urn:ieft:params:netconf:capability:action:1.0</capability>
+      <capability>urn:ieft:params:netconf:capability:notification:1.0</capability>
+      <capability>urn:ieft:params:netconf:capability:interleave:1.0</capability>
+      <capability>urn:ericsson:com:netconf:notification:1.1</capability>
+      <capability>urn:ericsson:com:sgsnmme:heartbeat:1.0</capability>
+      <capability>http://www.ericsson.com/gsn/4.0/contentVersion</capability>
+      <capability>http://www.ericsson.com/gsn/3.0/protocolVersion</capability>
+   </capabilities>
+   <session-id>1</session-id>
+</hello>

@@ -1,15 +1,22 @@
-<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<hello xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">   
    <capabilities>
-      <capability>urn:ieft:params:netconf:base:1.0</capability>
-      <capability>urn:ieft:params:netconf:capability:candidate:1.0</capability>
-      <capability>urn:ieft:params:netconf:capability:validate:1.0</capability>
-      <capability>urn:ieft:params:netconf:capability:action:1.0</capability>
-      <capability>urn:ieft:params:netconf:capability:notification:1.0</capability>
-      <capability>urn:ieft:params:netconf:capability:interleave:1.0</capability>
-      <capability>urn:ericsson:com:netconf:notification:1.1</capability>
-      <capability>urn:ericsson:com:sgsnmme:heartbeat:1.0</capability>
-      <capability>http://www.ericsson.com/gsn/4.0/contentVersion</capability>
-      <capability>http://www.ericsson.com/gsn/3.0/protocolVersion</capability>
+      <capability>urn:ietf:params:netconf:base:1.0</capability>
+      <capability>urn:ietf:params:netconf:base:1.1</capability>
+      <capability>urn:ietf:params:netconf:capability:writable-running:1.0</capability>
+      <capability>urn:ietf:params:netconf:capability:validate:1.0</capability>
+      <capability>urn:ietf:params:netconf:capability:validate:1.1</capability>
+      <capability>urn:ietf:params:netconf:capability:startup:1.0</capability>
+<!--
+-->
+      <capability>urn:ietf:params:netconf:capability:url:1.0?scheme=ftp,tftp,file</capability>
+      <capability>urn:ietf:params:netconf:capability:with-defaults:1.0?basicmode=trim</capability>
+      <capability>urn:ietf:params:xml:ns:netconf:base:1.0?module=ietf-netconf&amp;revision=2015-02-27&amp;features=writable-running,validate,startup,url&amp;deviations=alu-netconf-deviations-r13</capability>
+      <capability>urn:xxx-network.com:sros:ns:yang:netconf-deviations-r13?module= xxx-network -deviations-r13&amp;revision=2015-02-27</capability>
+      <capability>urn:xxx-network.com:sros:ns:yang:cli-content-layer-r13?module= xxx-network -cli-content-layer-r13&amp;revision=2015-02-27</capability>
+      <capability>urn:xxx-network.com:sros:ns:yang:conf-r13?module=confr13&amp;revision=2015-02-27</capability>
+      <capability>urn:xxx-network.com:sros:ns:yang:conf-aaa-r13?module=conf-aaar13&amp;revision=2015-02-27</capability>
+      <capability>urn:xxx-network.com:sros:ns:yang:conf-vsm-r13?module=conf-vsmr13&amp;revision=2015-02-27</capability>
    </capabilities>
-   <session-id>1</session-id>
+  <session-id>54</session-id>
 </hello>
