@@ -17,6 +17,7 @@ spec:
       containers:
       - name: netconf-sim
         image: mcguinnessa/netconf-sim:latest
+        imagePullPolicy: Always
         env:
         - name: PORT 
           value: "1830"
@@ -26,6 +27,9 @@ spec:
           value: "alex"
         - name: LOGLEVEL 
           value: "debug"
+        - name: TIMEOUT 
+          value: "600"
+# Use the localhost:32000 path to use image from registry service
 # Use the localhost:32000 path to use image from registry service
 # e.g.  image: localhost:32000/hello-app:v3
         ports:
