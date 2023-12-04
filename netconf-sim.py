@@ -37,14 +37,14 @@ class NetconfServer(paramiko.ServerInterface):
         self.event = threading.Event()
         logging.debug("Init Server")
 
-        self.node = NETCONFTestNode(caching) 
+        self.node = NETCONFTestNode(caching, self) 
         NETCONFsubsys.register_callback_object(self.node)
         self.user = user
 
 
 
     def check_channel_request(self, kind, chanid):
-        logging.debug("check_channel_request")
+        logging.debug("NCS - check_channel_request")
         logging.debug("    kind="+str(kind))
         logging.debug("  chanid="+str(chanid))
         if kind == 'session':
@@ -61,7 +61,7 @@ class NetconfServer(paramiko.ServerInterface):
 
 
     def check_auth_publickey(self, username, key):
-        logging.debug("check_auth_publickey")
+        logging.debug("NCS - check_auth_publickey")
         logging.debug("username:" + str(username))
 #        logging.debug("key:" + str(key))
           
@@ -75,16 +75,58 @@ class NetconfServer(paramiko.ServerInterface):
 
 
     def get_allowed_auths(self, username):
-        logging.debug("get_allowed_auths")
+        logging.debug("NCS - get_allowed_auths")
         return 'publickey'
 
     def check_channel_exec_request(self, channel, command):
-        logging.debug("check_channel_exec_request")
+        logging.debug("NCS - check_channel_exec_request")
         # This is the command we need to parse
         logging.debug("Command:" + command)
         logging.debug("Channel:" + channel)
         self.event.set()
+        logging.debug("Setting event...")
         return True
+
+#    def cancel_port_forward_request(self):
+#        logging.debug("NCS - cancel_port_forward_request")
+#    def check_auth_gssapi_keyex(self):
+#        logging.debug("NCS - check_auth_gssapi_keyex")
+#    def check_auth_gssapi_with_mic(self):
+#        logging.debug("NCS - check_auth_gssapi_with_mic")
+#    def check_auth_interactive(self):
+#        logging.debug("NCS - check_auth_interactive")
+#    def check_auth_interactive_response(self):
+#        logging.debug("NCS - check_auth_interactive_response")
+#    def check_auth_none(self):
+#        logging.debug("NCS - check_auth_none")
+#    def check_auth_password(self):
+#        logging.debug("NCS - check_auth_password")
+#    def check_channel_direct_tcpip_request(self):
+#        logging.debug("NCS - check_channel_direct_tcpip_request")
+#    def check_channel_env_request(self):
+#        logging.debug("NCS - check_channel_env_request")
+#    def check_channel_forward_agent_request(self):
+#        logging.debug("NCS - check_channel_forward_agent_request")
+#    def check_channel_pty_request(self):
+#        logging.debug("NCS - check_channel_pty_request")
+#    def check_channel_shell_request(self):
+#        logging.debug("NCS - check_channel_shell_request")
+#    def check_channel_window_change_request(self):
+#        logging.debug("NCS - check_channel_window_change_request")
+#    def check_channel_x11_request(self):
+#        logging.debug("NCS - check_channel_x11_request")
+#    def check_global_request(self):
+#        logging.debug("NCS - check_global_request")
+#    def check_port_forward_request(self):
+#        logging.debug("NCS - check_port_forward_request")
+#    def enable_auth_gssapi(self):
+#        logging.debug("NCS - enable_auth_gssapi")
+#    def get_banner(self):
+#        logging.debug("NCS - get_banner")
+
+
+
+
 
 def threaded(client, key_file, user, timeout, response_caching):
 
@@ -108,6 +150,7 @@ def threaded(client, key_file, user, timeout, response_caching):
 
     # Wait 30 seconds for a command
     server.event.wait(timeout)
+    logging.info("Timeout expired, closing server")
     t.close()
 
 

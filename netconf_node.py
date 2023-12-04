@@ -37,7 +37,7 @@ RPC_TAG = "rpc"
 
 class NETCONFTestNode():
 
-   def __init__(self, response_caching):
+   def __init__(self, response_caching, server):
       logging.debug("NETCONFTestNode init")
       logging.debug("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="101"><get-config><source><running/></source><config xmlns="http://example.com/schema/1.2/config"><users/></config></get-config></rpc>]]>]]>""")
       logging.debug("""<?xml version="1.0" encoding="UTF-8"?><rpc message-id="106" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><close-session/></rpc>]]>]]>""")
@@ -46,6 +46,7 @@ class NETCONFTestNode():
       self.namespaces = {'' : '', 'base': 'urn:ietf:params:xml:ns:netconf:base:1.0', 'nc' : 'urn:ietf:params:xml:ns:netconf:base:1.0'}
       self.CLOSED = False
       #self.terminator = NC_TERMINATOR_1_0
+      self.server = server
 
       self.responses = Responses("./responses", response_caching)
 
@@ -99,6 +100,9 @@ class NETCONFTestNode():
                tag = xmlroot[0].tag.split("}",1)[-1]
                logging.debug("   TAG:" + str(tag))
 
+               if tag == CLOSE_SESSION_TAG:
+                  self.CLOSED = True
+
                resp = self.responses.get_response_for(tag)
                logging.debug("   BODY(raw):" + str(resp))
                if "{}" in resp:
@@ -124,19 +128,13 @@ class NETCONFTestNode():
             resp = self.responses.get_response_for(ERROR_TAG)
 
          #logging.debug(resp)
-         logging.info("OUT:" + ET.canonicalize(resp))
+         #logging.info("OUT:" + ET.canonicalize(resp))
          #channel.send(resp)
-
-         #if version == NC_BASE_1_1:
-         #   #channel.send(NC_TERMINATOR_1_1)
-         #   session.write_message_1_1(resp)
-         #else:
-         #   #channel.send(NC_TERMINATOR_1_0)
-         #   session.write_message_1_0(resp)
          session.write_message(resp)
 
-
-      sock.close()
+      #sock.close()
+      session.close()
+      self.server.event.set()
             
 #  <rpc message-id="101"><command>showConfig</command><params>None</params></rpc>]]>]]>
 ###################################################################################
